@@ -1,0 +1,11 @@
+#
+# zed-erlang
+#
+
+*.wasm
+
+#
+# Rust
+#
+
+/target
