@@ -32,7 +32,7 @@ impl ErlangLanguagePlatform {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        if let Some(path) = worktree.which("elp") {
+        if let Some(path) = worktree.which(Self::LANGUAGE_SERVER_ID) {
             return Ok(path);
         }
 
@@ -55,16 +55,17 @@ impl ErlangLanguagePlatform {
         )?;
 
         let (platform, arch) = zed::current_platform();
+        let otp_version = "28";
         let asset_name = {
-            let otp_version = "26.2";
             let (os, os_target) = match platform {
                 zed::Os::Mac => ("macos", "apple-darwin"),
                 zed::Os::Linux => ("linux", "unknown-linux-gnu"),
-                zed::Os::Windows => return Err(format!("unsupported platform: {platform:?}")),
+                zed::Os::Windows => ("windows", "pc-windows-msvc"),
             };
 
             format!(
-                "elp-{os}-{arch}-{os_target}-otp-{otp_version}.tar.gz",
+                "{}-{os}-{arch}-{os_target}-otp-{otp_version}.tar.gz",
+                Self::LANGUAGE_SERVER_ID,
                 arch = match arch {
                     zed::Architecture::Aarch64 => "aarch64",
                     zed::Architecture::X8664 => "x86_64",
@@ -80,8 +81,13 @@ impl ErlangLanguagePlatform {
             .find(|asset| asset.name == asset_name)
             .ok_or_else(|| format!("no asset found matching {:?}", asset_name))?;
 
-        let version_dir = format!("elp-{}", release.version);
-        let binary_path = format!("{version_dir}/elp");
+        let version_dir = format!(
+            "{}-v{}-otp-{}",
+            Self::LANGUAGE_SERVER_ID,
+            release.version,
+            otp_version,
+        );
+        let binary_path = format!("{}/{}", version_dir, Self::LANGUAGE_SERVER_ID);
 
         if !fs::metadata(&binary_path).is_ok_and(|stat| stat.is_file()) {
             zed::set_language_server_installation_status(

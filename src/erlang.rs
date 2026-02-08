@@ -24,13 +24,10 @@ impl zed::Extension for ErlangExtension {
     ) -> Result<zed::Command> {
         match language_server_id.as_ref() {
             ErlangLs::LANGUAGE_SERVER_ID => {
-                let erlang_ls = self.erlang_ls.get_or_insert_with(ErlangLs::new);
-
-                Ok(zed::Command {
-                    command: erlang_ls.language_server_binary_path(language_server_id, worktree)?,
-                    args: vec![],
-                    env: Default::default(),
-                })
+                let erlang_ls = self
+                    .erlang_ls
+                    .get_or_insert_with(ErlangLs::new);
+                erlang_ls.language_server_command(language_server_id, worktree)
             }
             ErlangLanguagePlatform::LANGUAGE_SERVER_ID => {
                 let erlang_language_platform = self
