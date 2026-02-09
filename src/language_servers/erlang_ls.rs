@@ -48,19 +48,34 @@ impl ErlangLs {
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
-        let release = zed::latest_github_release(
-            "erlang-ls/erlang_ls",
-            zed::GithubReleaseOptions {
-                require_assets: true,
-                pre_release: false,
-            },
-        )?;
 
         let (platform, _arch) = zed::current_platform();
         let otp_version = match platform {
             zed::Os::Mac | zed::Os::Linux => "27",
             zed::Os::Windows => "26.2.5.3",
         };
+
+        let release = match zed::latest_github_release(
+            "erlang-ls/erlang_ls",
+            zed::GithubReleaseOptions {
+                require_assets: true,
+                pre_release: false,
+            },
+        ) {
+            Ok(release) => release,
+            Err(_) => {
+                if let Some(binary_path) = util::find_existing_binary(
+                    Self::LANGUAGE_SERVER_ID,
+                    otp_version,
+                    &Self::LANGUAGE_SERVER_ID.replace("-", "_"),
+                ) {
+                    self.cached_binary_path = Some(binary_path.clone());
+                    return Ok(binary_path);
+                }
+                return Err("failed to download latest github release".to_string());
+            }
+        };
+
         let asset_name = {
             let os = match platform {
                 zed::Os::Mac => "macos",

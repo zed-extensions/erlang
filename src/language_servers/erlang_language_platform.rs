@@ -48,16 +48,31 @@ impl ErlangLanguagePlatform {
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
-        let release = zed::latest_github_release(
+
+        let (platform, arch) = zed::current_platform();
+        let otp_version = "28";
+
+        let release = match zed::latest_github_release(
             "WhatsApp/erlang-language-platform",
             zed::GithubReleaseOptions {
                 require_assets: true,
                 pre_release: false,
             },
-        )?;
+        ) {
+            Ok(release) => release,
+            Err(_) => {
+                if let Some(binary_path) = util::find_existing_binary(
+                    Self::LANGUAGE_SERVER_ID,
+                    otp_version,
+                    Self::LANGUAGE_SERVER_ID,
+                ) {
+                    self.cached_binary_path = Some(binary_path.clone());
+                    return Ok(binary_path);
+                }
+                return Err("failed to download latest github release".to_string());
+            }
+        };
 
-        let (platform, arch) = zed::current_platform();
-        let otp_version = "28";
         let asset_name = {
             let (os, os_target) = match platform {
                 zed::Os::Mac => ("macos", "apple-darwin"),

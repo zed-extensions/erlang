@@ -20,3 +20,27 @@ pub(super) fn remove_outdated_versions(
     }
     Ok(())
 }
+
+pub(super) fn find_existing_binary(
+    language_server_id: &'static str,
+    otp_version: &str,
+    binary: &str,
+) -> Option<String> {
+    fs::read_dir(".")
+        .ok()?
+        .flatten()
+        .filter_map(|entry| {
+            let path = entry.path();
+            if path.is_dir() && entry.file_name().to_str().is_some_and(|file_name| {
+                file_name.starts_with(language_server_id)
+                && file_name.ends_with(otp_version)
+            }) {
+                let binary_path = path.join(binary);
+                if binary_path.is_file() {
+                    return Some(binary_path.to_string_lossy().to_string());
+                }
+            }
+            None
+        })
+        .next()
+}
