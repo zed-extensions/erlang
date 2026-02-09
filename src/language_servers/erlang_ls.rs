@@ -34,7 +34,9 @@ impl ErlangLs {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        if let Some(path) = worktree.which(Self::LANGUAGE_SERVER_ID) {
+        let binary_name = Self::LANGUAGE_SERVER_ID.replace("-", "_");
+
+        if let Some(path) = worktree.which(&binary_name) {
             return Ok(path);
         }
 
@@ -64,11 +66,9 @@ impl ErlangLs {
         ) {
             Ok(release) => release,
             Err(_) => {
-                if let Some(binary_path) = util::find_existing_binary(
-                    Self::LANGUAGE_SERVER_ID,
-                    otp_version,
-                    &Self::LANGUAGE_SERVER_ID.replace("-", "_"),
-                ) {
+                if let Some(binary_path) =
+                    util::find_existing_binary(Self::LANGUAGE_SERVER_ID, otp_version, &binary_name)
+                {
                     self.cached_binary_path = Some(binary_path.clone());
                     return Ok(binary_path);
                 }
@@ -83,10 +83,7 @@ impl ErlangLs {
                 zed::Os::Windows => "windows",
             };
 
-            format!(
-                "{}-{os}-{otp_version}.tar.gz",
-                Self::LANGUAGE_SERVER_ID.replace("-", "_"),
-            )
+            format!("{binary_name}-{os}-{otp_version}.tar.gz")
         };
 
         let asset = release
@@ -101,11 +98,7 @@ impl ErlangLs {
             release.version,
             otp_version,
         );
-        let binary_path = format!(
-            "{}/{}",
-            version_dir,
-            Self::LANGUAGE_SERVER_ID.replace("-", "_"),
-        );
+        let binary_path = format!("{}/{}", version_dir, binary_name);
 
         if !fs::metadata(&binary_path).is_ok_and(|stat| stat.is_file()) {
             zed::set_language_server_installation_status(
@@ -120,11 +113,7 @@ impl ErlangLs {
             )
             .map_err(|e| format!("failed to download file: {e}"))?;
 
-            util::remove_outdated_versions(
-                Self::LANGUAGE_SERVER_ID,
-                &otp_version,
-                &version_dir,
-            )?;
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, otp_version, &version_dir)?;
         }
 
         self.cached_binary_path = Some(binary_path.clone());

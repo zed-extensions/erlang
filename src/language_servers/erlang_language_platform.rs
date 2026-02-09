@@ -119,11 +119,7 @@ impl ErlangLanguagePlatform {
             )
             .map_err(|e| format!("failed to download file: {e}"))?;
 
-            util::remove_outdated_versions(
-                Self::LANGUAGE_SERVER_ID,
-                &otp_version,
-                &version_dir,
-            )?;
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, otp_version, &version_dir)?;
         }
 
         self.cached_binary_path = Some(binary_path.clone());
