@@ -2,6 +2,7 @@
 # zed-erlang
 #
 
+/grammars
 *.wasm
 
 #
