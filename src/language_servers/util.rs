@@ -26,23 +26,17 @@ pub(super) fn find_existing_binary(
     otp_version: &str,
     binary_name: &str,
 ) -> Option<String> {
-    fs::read_dir(".")
-        .ok()?
-        .flatten()
-        .filter_map(|entry| {
-            let path = entry.path();
-            if path.is_dir()
-                && entry.file_name().to_str().is_some_and(|file_name| {
-                    file_name.starts_with(language_server_id)
-                        && file_name.ends_with(&format!("otp-{otp_version}"))
-                })
-            {
-                let binary_path = path.join(binary_name);
-                if binary_path.is_file() {
-                    return Some(binary_path.to_string_lossy().to_string());
-                }
-            }
+    fs::read_dir(".").ok()?.flatten().find_map(|entry| {
+        let binary_path = entry.path().join(binary_name);
+
+        if binary_path.is_file()
+            && let Some(binary_dir) = entry.file_name().to_str()
+            && binary_dir.starts_with(language_server_id)
+            && binary_dir.ends_with(&format!("otp-{otp_version}"))
+        {
+            Some(binary_path.to_string_lossy().to_string())
+        } else {
             None
-        })
-        .next()
+        }
+    })
 }
