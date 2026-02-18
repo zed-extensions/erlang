@@ -1,21 +1,122 @@
+use std::fs;
+
 use zed_extension_api::{self as zed, LanguageServerId, Result};
 
-pub struct ErlangLs;
+use crate::language_servers::util;
+
+pub struct ErlangLs {
+    cached_binary_path: Option<String>,
+}
 
 impl ErlangLs {
     pub const LANGUAGE_SERVER_ID: &'static str = "erlang-ls";
 
     pub fn new() -> Self {
-        Self
+        Self {
+            cached_binary_path: None,
+        }
     }
 
-    pub fn language_server_binary_path(
+    pub fn language_server_command(
         &mut self,
-        _language_server_id: &LanguageServerId,
+        language_server_id: &LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<zed::Command> {
+        Ok(zed::Command {
+            command: self.language_server_binary_path(language_server_id, worktree)?,
+            args: vec!["server".to_string()],
+            env: Default::default(),
+        })
+    }
+
+    fn language_server_binary_path(
+        &mut self,
+        language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        worktree
-            .which("erlang_ls")
-            .ok_or_else(|| "erlang_ls must be installed and available on your $PATH".to_string())
+        let binary_name = Self::LANGUAGE_SERVER_ID.replace("-", "_");
+
+        if let Some(path) = worktree.which(&binary_name) {
+            return Ok(path);
+        }
+
+        if let Some(path) = &self.cached_binary_path
+            && fs::metadata(path).is_ok_and(|stat| stat.is_file())
+        {
+            return Ok(path.clone());
+        }
+
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &zed::LanguageServerInstallationStatus::CheckingForUpdate,
+        );
+
+        let (platform, _arch) = zed::current_platform();
+        let otp_version = match platform {
+            zed::Os::Mac | zed::Os::Linux => "27",
+            zed::Os::Windows => "26.2.5.3",
+        };
+
+        let release = match zed::latest_github_release(
+            "erlang-ls/erlang_ls",
+            zed::GithubReleaseOptions {
+                require_assets: true,
+                pre_release: false,
+            },
+        ) {
+            Ok(release) => release,
+            Err(_) => {
+                if let Some(binary_path) =
+                    util::find_existing_binary(Self::LANGUAGE_SERVER_ID, otp_version, &binary_name)
+                {
+                    self.cached_binary_path = Some(binary_path.clone());
+                    return Ok(binary_path);
+                }
+                return Err("failed to download latest github release".to_string());
+            }
+        };
+
+        let asset_name = {
+            let os = match platform {
+                zed::Os::Mac => "macos",
+                zed::Os::Linux => "linux",
+                zed::Os::Windows => "windows",
+            };
+
+            format!("{binary_name}-{os}-{otp_version}.tar.gz")
+        };
+
+        let asset = release
+            .assets
+            .iter()
+            .find(|asset| asset.name == asset_name)
+            .ok_or_else(|| format!("no asset found matching {:?}", asset_name))?;
+
+        let version_dir = format!(
+            "{}-v{}-otp-{}",
+            Self::LANGUAGE_SERVER_ID,
+            release.version,
+            otp_version,
+        );
+        let binary_path = format!("{}/{}", version_dir, binary_name);
+
+        if !fs::metadata(&binary_path).is_ok_and(|stat| stat.is_file()) {
+            zed::set_language_server_installation_status(
+                language_server_id,
+                &zed::LanguageServerInstallationStatus::Downloading,
+            );
+
+            zed::download_file(
+                &asset.download_url,
+                &version_dir,
+                zed::DownloadedFileType::GzipTar,
+            )
+            .map_err(|e| format!("failed to download file: {e}"))?;
+
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, otp_version, &version_dir)?;
+        }
+
+        self.cached_binary_path = Some(binary_path.clone());
+        Ok(binary_path)
     }
 }

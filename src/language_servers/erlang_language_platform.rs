@@ -2,6 +2,8 @@ use std::fs;
 
 use zed_extension_api::{self as zed, LanguageServerId, Result};
 
+use crate::language_servers::util;
+
 pub struct ErlangLanguagePlatform {
     cached_binary_path: Option<String>,
 }
@@ -32,39 +34,55 @@ impl ErlangLanguagePlatform {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        if let Some(path) = worktree.which("elp") {
+        if let Some(path) = worktree.which(Self::LANGUAGE_SERVER_ID) {
             return Ok(path);
         }
 
-        if let Some(path) = &self.cached_binary_path {
-            if fs::metadata(path).is_ok_and(|stat| stat.is_file()) {
-                return Ok(path.clone());
-            }
+        if let Some(path) = &self.cached_binary_path
+            && fs::metadata(path).is_ok_and(|stat| stat.is_file())
+        {
+            return Ok(path.clone());
         }
 
         zed::set_language_server_installation_status(
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
-        let release = zed::latest_github_release(
+
+        let (platform, arch) = zed::current_platform();
+        const OTP_VERSION: &str = "28";
+
+        let release = match zed::latest_github_release(
             "WhatsApp/erlang-language-platform",
             zed::GithubReleaseOptions {
                 require_assets: true,
                 pre_release: false,
             },
-        )?;
+        ) {
+            Ok(release) => release,
+            Err(_) => {
+                if let Some(binary_path) = util::find_existing_binary(
+                    Self::LANGUAGE_SERVER_ID,
+                    OTP_VERSION,
+                    Self::LANGUAGE_SERVER_ID,
+                ) {
+                    self.cached_binary_path = Some(binary_path.clone());
+                    return Ok(binary_path);
+                }
+                return Err("failed to download latest github release".to_string());
+            }
+        };
 
-        let (platform, arch) = zed::current_platform();
         let asset_name = {
-            let otp_version = "26.2";
             let (os, os_target) = match platform {
                 zed::Os::Mac => ("macos", "apple-darwin"),
                 zed::Os::Linux => ("linux", "unknown-linux-gnu"),
-                zed::Os::Windows => return Err(format!("unsupported platform: {platform:?}")),
+                zed::Os::Windows => ("windows", "pc-windows-msvc"),
             };
 
             format!(
-                "elp-{os}-{arch}-{os_target}-otp-{otp_version}.tar.gz",
+                "{}-{os}-{arch}-{os_target}-otp-{OTP_VERSION}.tar.gz",
+                Self::LANGUAGE_SERVER_ID,
                 arch = match arch {
                     zed::Architecture::Aarch64 => "aarch64",
                     zed::Architecture::X8664 => "x86_64",
@@ -80,8 +98,13 @@ impl ErlangLanguagePlatform {
             .find(|asset| asset.name == asset_name)
             .ok_or_else(|| format!("no asset found matching {:?}", asset_name))?;
 
-        let version_dir = format!("elp-{}", release.version);
-        let binary_path = format!("{version_dir}/elp");
+        let version_dir = format!(
+            "{}-v{}-otp-{}",
+            Self::LANGUAGE_SERVER_ID,
+            release.version,
+            OTP_VERSION,
+        );
+        let binary_path = format!("{}/{}", version_dir, Self::LANGUAGE_SERVER_ID);
 
         if !fs::metadata(&binary_path).is_ok_and(|stat| stat.is_file()) {
             zed::set_language_server_installation_status(
@@ -96,14 +119,7 @@ impl ErlangLanguagePlatform {
             )
             .map_err(|e| format!("failed to download file: {e}"))?;
 
-            let entries =
-                fs::read_dir(".").map_err(|e| format!("failed to list working directory {e}"))?;
-            for entry in entries {
-                let entry = entry.map_err(|e| format!("failed to load directory entry {e}"))?;
-                if entry.file_name().to_str() != Some(&version_dir) {
-                    fs::remove_dir_all(entry.path()).ok();
-                }
-            }
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, OTP_VERSION, &version_dir)?;
         }
 
         self.cached_binary_path = Some(binary_path.clone());
