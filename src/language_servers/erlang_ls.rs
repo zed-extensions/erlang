@@ -2,7 +2,7 @@ use std::fs;
 
 use zed_extension_api::{self as zed, LanguageServerId, Result};
 
-use crate::language_servers::util;
+use crate::language_servers::{config, util};
 
 pub struct ErlangLs {
     cached_binary_path: Option<String>,
@@ -34,6 +34,15 @@ impl ErlangLs {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
+        let (platform, _arch) = zed::current_platform();
+        let lsp_settings = config::get_lsp_settings(Self::LANGUAGE_SERVER_ID, worktree);
+        let otp_version = match platform {
+            zed::Os::Mac | zed::Os::Linux => {
+                config::get_otp_version(&lsp_settings).unwrap_or("27".to_string())
+            }
+            zed::Os::Windows => "26.2.5.3".to_string(),
+        };
+
         let binary_name = Self::LANGUAGE_SERVER_ID.replace("-", "_");
 
         if let Some(path) = worktree.which(&binary_name) {
@@ -42,6 +51,7 @@ impl ErlangLs {
 
         if let Some(path) = &self.cached_binary_path
             && fs::metadata(path).is_ok_and(|stat| stat.is_file())
+            && path.ends_with(&format!("otp-{otp_version}"))
         {
             return Ok(path.clone());
         }
@@ -50,12 +60,6 @@ impl ErlangLs {
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
-
-        let (platform, _arch) = zed::current_platform();
-        let otp_version = match platform {
-            zed::Os::Mac | zed::Os::Linux => "27",
-            zed::Os::Windows => "26.2.5.3",
-        };
 
         let release = match zed::latest_github_release(
             "erlang-ls/erlang_ls",
@@ -67,7 +71,7 @@ impl ErlangLs {
             Ok(release) => release,
             Err(_) => {
                 if let Some(binary_path) =
-                    util::find_existing_binary(Self::LANGUAGE_SERVER_ID, otp_version, &binary_name)
+                    util::find_existing_binary(Self::LANGUAGE_SERVER_ID, &otp_version, &binary_name)
                 {
                     self.cached_binary_path = Some(binary_path.clone());
                     return Ok(binary_path);
@@ -113,7 +117,7 @@ impl ErlangLs {
             )
             .map_err(|e| format!("failed to download file: {e}"))?;
 
-            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, otp_version, &version_dir)?;
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, &otp_version, &version_dir)?;
         }
 
         self.cached_binary_path = Some(binary_path.clone());
