@@ -50,7 +50,7 @@ impl ErlangLanguagePlatform {
         );
 
         let (platform, arch) = zed::current_platform();
-        let otp_version = "28";
+        const OTP_VERSION: &str = "28";
 
         let release = match zed::latest_github_release(
             "WhatsApp/erlang-language-platform",
@@ -63,7 +63,7 @@ impl ErlangLanguagePlatform {
             Err(_) => {
                 if let Some(binary_path) = util::find_existing_binary(
                     Self::LANGUAGE_SERVER_ID,
-                    otp_version,
+                    OTP_VERSION,
                     Self::LANGUAGE_SERVER_ID,
                 ) {
                     self.cached_binary_path = Some(binary_path.clone());
@@ -81,7 +81,7 @@ impl ErlangLanguagePlatform {
             };
 
             format!(
-                "{}-{os}-{arch}-{os_target}-otp-{otp_version}.tar.gz",
+                "{}-{os}-{arch}-{os_target}-otp-{OTP_VERSION}.tar.gz",
                 Self::LANGUAGE_SERVER_ID,
                 arch = match arch {
                     zed::Architecture::Aarch64 => "aarch64",
@@ -102,7 +102,7 @@ impl ErlangLanguagePlatform {
             "{}-v{}-otp-{}",
             Self::LANGUAGE_SERVER_ID,
             release.version,
-            otp_version,
+            OTP_VERSION,
         );
         let binary_path = format!("{}/{}", version_dir, Self::LANGUAGE_SERVER_ID);
 
@@ -119,7 +119,7 @@ impl ErlangLanguagePlatform {
             )
             .map_err(|e| format!("failed to download file: {e}"))?;
 
-            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, otp_version, &version_dir)?;
+            util::remove_outdated_versions(Self::LANGUAGE_SERVER_ID, OTP_VERSION, &version_dir)?;
         }
 
         self.cached_binary_path = Some(binary_path.clone());
