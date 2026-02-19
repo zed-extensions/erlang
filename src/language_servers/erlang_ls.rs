@@ -1,6 +1,6 @@
 use std::fs;
 
-use zed_extension_api::{self as zed, LanguageServerId, Result};
+use zed_extension_api::{self as zed, LanguageServerId, Result, Worktree};
 
 use crate::language_servers::{config, util};
 
@@ -20,7 +20,7 @@ impl ErlangLs {
     pub fn language_server_command(
         &mut self,
         language_server_id: &LanguageServerId,
-        worktree: &zed::Worktree,
+        worktree: &Worktree,
     ) -> Result<zed::Command> {
         Ok(zed::Command {
             command: self.language_server_binary_path(language_server_id, worktree)?,
@@ -32,7 +32,7 @@ impl ErlangLs {
     fn language_server_binary_path(
         &mut self,
         language_server_id: &LanguageServerId,
-        worktree: &zed::Worktree,
+        worktree: &Worktree,
     ) -> Result<String> {
         let (platform, _arch) = zed::current_platform();
         let lsp_settings = config::get_lsp_settings(Self::LANGUAGE_SERVER_ID, worktree);
