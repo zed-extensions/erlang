@@ -4,6 +4,11 @@ use zed_extension_api::{self as zed, LanguageServerId, Result, Worktree};
 
 use crate::language_servers::{config, util};
 
+struct ErlangLsBinary {
+    path: String,
+    args: Vec<String>,
+}
+
 pub struct ErlangLs {
     cached_binary_path: Option<String>,
 }
@@ -22,18 +27,20 @@ impl ErlangLs {
         language_server_id: &LanguageServerId,
         worktree: &Worktree,
     ) -> Result<zed::Command> {
+        let erlang_ls = self.language_server_binary(language_server_id, worktree)?;
+
         Ok(zed::Command {
-            command: self.language_server_binary_path(language_server_id, worktree)?,
-            args: vec!["server".to_string()],
+            command: erlang_ls.path,
+            args: erlang_ls.args,
             env: Default::default(),
         })
     }
 
-    fn language_server_binary_path(
+    fn language_server_binary(
         &mut self,
         language_server_id: &LanguageServerId,
         worktree: &Worktree,
-    ) -> Result<String> {
+    ) -> Result<ErlangLsBinary> {
         let (platform, _arch) = zed::current_platform();
         let lsp_settings = config::get_lsp_settings(Self::LANGUAGE_SERVER_ID, worktree);
         let otp_version = match platform {
@@ -44,16 +51,32 @@ impl ErlangLs {
         };
 
         let binary_name = Self::LANGUAGE_SERVER_ID.replace("-", "_");
+        let binary_settings = config::get_binary_settings(Self::LANGUAGE_SERVER_ID, worktree);
+        let binary_args = config::get_binary_args(&binary_settings)
+            .unwrap_or_else(|| vec!["--transport".to_string(), "stdio".to_string()]);
 
-        if let Some(path) = worktree.which(&binary_name) {
-            return Ok(path);
+        if let Some(binary_path) = config::get_binary_path(&binary_settings) {
+            return Ok(ErlangLsBinary {
+                path: binary_path,
+                args: binary_args,
+            });
         }
 
-        if let Some(path) = &self.cached_binary_path
-            && fs::metadata(path).is_ok_and(|stat| stat.is_file())
-            && path.ends_with(&format!("otp-{otp_version}"))
+        if let Some(binary_path) = worktree.which(&binary_name) {
+            return Ok(ErlangLsBinary {
+                path: binary_path,
+                args: binary_args,
+            });
+        }
+
+        if let Some(binary_path) = &self.cached_binary_path
+            && fs::metadata(binary_path).is_ok_and(|stat| stat.is_file())
+            && binary_path.ends_with(&format!("otp-{otp_version}/{}", binary_name))
         {
-            return Ok(path.clone());
+            return Ok(ErlangLsBinary {
+                path: binary_path.clone(),
+                args: binary_args,
+            });
         }
 
         zed::set_language_server_installation_status(
@@ -74,7 +97,10 @@ impl ErlangLs {
                     util::find_existing_binary(Self::LANGUAGE_SERVER_ID, &otp_version, &binary_name)
                 {
                     self.cached_binary_path = Some(binary_path.clone());
-                    return Ok(binary_path);
+                    return Ok(ErlangLsBinary {
+                        path: binary_path,
+                        args: binary_args,
+                    });
                 }
                 return Err("failed to download latest github release".to_string());
             }
@@ -121,6 +147,9 @@ impl ErlangLs {
         }
 
         self.cached_binary_path = Some(binary_path.clone());
-        Ok(binary_path)
+        Ok(ErlangLsBinary {
+            path: binary_path,
+            args: binary_args,
+        })
     }
 }
