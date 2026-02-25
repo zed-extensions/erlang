@@ -42,8 +42,8 @@ impl ErlangLanguagePlatform {
         worktree: &Worktree,
     ) -> Result<ErlangLanguagePlatformBinary> {
         let (platform, arch) = zed::current_platform();
-        let lsp_settings = config::get_lsp_settings(Self::LANGUAGE_SERVER_ID, worktree);
-        let otp_version = config::get_otp_version(&lsp_settings).unwrap_or("28".to_string());
+        let configuration = config::get_workspace_configuration(Self::LANGUAGE_SERVER_ID, worktree);
+        let otp_version = config::get_otp_version(&configuration).unwrap_or("28".to_string());
 
         let binary_settings = config::get_binary_settings(Self::LANGUAGE_SERVER_ID, worktree);
         let binary_args =

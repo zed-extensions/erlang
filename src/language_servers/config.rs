@@ -4,13 +4,13 @@ use zed_extension_api::{
     settings::{CommandSettings, LspSettings},
 };
 
-pub(super) fn get_lsp_settings(
+pub(super) fn get_workspace_configuration(
     language_server_id: &'static str,
     worktree: &Worktree,
 ) -> Option<Value> {
     LspSettings::for_worktree(language_server_id, worktree)
         .ok()
-        .and_then(|lsp_settings| lsp_settings.settings)
+        .and_then(|lsp_settings| lsp_settings.settings.clone())
 }
 
 pub(super) fn get_binary_settings(
@@ -22,8 +22,8 @@ pub(super) fn get_binary_settings(
         .and_then(|lsp_settings| lsp_settings.binary)
 }
 
-pub(super) fn get_otp_version(lsp_settings: &Option<Value>) -> Option<String> {
-    if let Some(otp_version) = lsp_settings {
+pub(super) fn get_otp_version(configuration: &Option<Value>) -> Option<String> {
+    if let Some(otp_version) = configuration {
         otp_version
             .pointer("/otp_version")?
             .as_str()

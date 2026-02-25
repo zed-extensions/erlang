@@ -42,10 +42,10 @@ impl ErlangLs {
         worktree: &Worktree,
     ) -> Result<ErlangLsBinary> {
         let (platform, _arch) = zed::current_platform();
-        let lsp_settings = config::get_lsp_settings(Self::LANGUAGE_SERVER_ID, worktree);
+        let configuration = config::get_workspace_configuration(Self::LANGUAGE_SERVER_ID, worktree);
         let otp_version = match platform {
             zed::Os::Mac | zed::Os::Linux => {
-                config::get_otp_version(&lsp_settings).unwrap_or("27".to_string())
+                config::get_otp_version(&configuration).unwrap_or("27".to_string())
             }
             zed::Os::Windows => "26.2.5.3".to_string(),
         };
