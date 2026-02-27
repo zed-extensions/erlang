@@ -10,7 +10,7 @@ pub(super) fn get_workspace_configuration(
 ) -> Option<Value> {
     LspSettings::for_worktree(language_server_id, worktree)
         .ok()
-        .and_then(|lsp_settings| lsp_settings.settings.clone())
+        .and_then(|lsp_settings| lsp_settings.settings)
 }
 
 pub(super) fn get_binary_settings(
@@ -22,15 +22,11 @@ pub(super) fn get_binary_settings(
         .and_then(|lsp_settings| lsp_settings.binary)
 }
 
-pub(super) fn get_otp_version(configuration: &Option<Value>) -> Option<String> {
-    if let Some(otp_version) = configuration {
-        otp_version
-            .pointer("/otp_version")?
-            .as_str()
-            .map(|x| x.to_string())
-    } else {
-        None
-    }
+pub(super) fn get_otp_version(configuration: Value) -> Option<String> {
+    configuration
+        .pointer("/otp_version")?
+        .as_str()
+        .map(|x| x.to_string())
 }
 
 pub(super) fn get_binary_path(binary_settings: &Option<CommandSettings>) -> Option<String> {

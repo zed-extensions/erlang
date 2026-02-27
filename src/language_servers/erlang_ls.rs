@@ -46,7 +46,8 @@ impl ErlangLs {
         let (platform, _arch) = zed::current_platform();
         let configuration = config::get_workspace_configuration(Self::LANGUAGE_SERVER_ID, worktree);
         let otp_version = match platform {
-            zed::Os::Mac | zed::Os::Linux => config::get_otp_version(&configuration)
+            zed::Os::Mac | zed::Os::Linux => configuration
+                .and_then(config::get_otp_version)
                 .unwrap_or(Self::DEFAULT_ERLANG_LS_OTP_VERSION.to_string()),
             zed::Os::Windows => Self::DEFAULT_ERLANG_LS_WIN_OTP_VERSION.to_string(),
         };
