@@ -15,6 +15,8 @@ pub struct ErlangLs {
 
 impl ErlangLs {
     pub const LANGUAGE_SERVER_ID: &'static str = "erlang-ls";
+    const DEFAULT_ERLANG_LS_OTP_VERSION: &'static str = "27";
+    const DEFAULT_ERLANG_LS_WIN_OTP_VERSION: &'static str = "26.2.5.3";
 
     pub fn new() -> Self {
         Self {
@@ -44,10 +46,9 @@ impl ErlangLs {
         let (platform, _arch) = zed::current_platform();
         let configuration = config::get_workspace_configuration(Self::LANGUAGE_SERVER_ID, worktree);
         let otp_version = match platform {
-            zed::Os::Mac | zed::Os::Linux => {
-                config::get_otp_version(&configuration).unwrap_or("27".to_string())
-            }
-            zed::Os::Windows => "26.2.5.3".to_string(),
+            zed::Os::Mac | zed::Os::Linux => config::get_otp_version(&configuration)
+                .unwrap_or(Self::DEFAULT_ERLANG_LS_OTP_VERSION.to_string()),
+            zed::Os::Windows => Self::DEFAULT_ERLANG_LS_WIN_OTP_VERSION.to_string(),
         };
 
         let binary_name = Self::LANGUAGE_SERVER_ID.replace("-", "_");

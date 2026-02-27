@@ -15,6 +15,7 @@ pub struct ErlangLanguagePlatform {
 
 impl ErlangLanguagePlatform {
     pub const LANGUAGE_SERVER_ID: &'static str = "elp";
+    const DEFAULT_ELP_OTP_VERSION: &'static str = "28";
 
     pub fn new() -> Self {
         Self {
@@ -43,7 +44,8 @@ impl ErlangLanguagePlatform {
     ) -> Result<ErlangLanguagePlatformBinary> {
         let (platform, arch) = zed::current_platform();
         let configuration = config::get_workspace_configuration(Self::LANGUAGE_SERVER_ID, worktree);
-        let otp_version = config::get_otp_version(&configuration).unwrap_or("28".to_string());
+        let otp_version = config::get_otp_version(&configuration)
+            .unwrap_or(Self::DEFAULT_ELP_OTP_VERSION.to_string());
 
         let binary_settings = config::get_binary_settings(Self::LANGUAGE_SERVER_ID, worktree);
         let binary_args =
