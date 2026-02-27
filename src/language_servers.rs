@@ -1,3 +1,4 @@
+mod config;
 mod erlang_language_platform;
 mod erlang_ls;
 mod util;
