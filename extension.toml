@@ -1,7 +1,7 @@
 id = "erlang"
 name = "Erlang"
 description = "Erlang support."
-version = "0.2.0"
+version = "0.2.1"
 schema_version = 1
 authors = ["Dairon M <dairon.medina@gmail.com>", "Fabian Bergström <fabian@fmbb.se>"]
 repository = "https://github.com/zed-extensions/erlang"
