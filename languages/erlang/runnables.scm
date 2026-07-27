@@ -42,8 +42,8 @@
       name: (atom) @run @erlang_test_name
       args: (expr_args
         .
-        (_)
-        .)))
+        (_) .)))
   (#match? @erlang_module_name "_SUITE$")
-  (#not-match? @run "^(all|groups|suite|group|init_per_suite|end_per_suite|init_per_group|end_per_group|init_per_testcase|end_per_testcase)$")
+  (#not-match? @run
+    "^(all|groups|suite|group|init_per_suite|end_per_suite|init_per_group|end_per_group|init_per_testcase|end_per_testcase)$")
   (#set! tag erlang-common-test-case))
