@@ -28,6 +28,8 @@
 
 (integer) @number
 
+(float) @number
+
 (var) @variable
 
 (atom) @string.special.symbol
@@ -39,6 +41,8 @@
 (dotdotdot) @comment.discard
 
 (comment) @comment
+
+(shebang) @comment
 
 ;
 ; Functions
@@ -101,6 +105,14 @@
 (import_attribute
   module: (atom) @module)
 
+(import_record_attribute
+  module: (atom) @module
+  records: (import_record_names
+    names: (atom) @type))
+
+(export_record_attribute
+  records: (atom) @type)
+
 ; export_type
 ; optional_callbacks
 ; compile
@@ -123,6 +135,11 @@
 
 (record_field
   name: (atom) @property)
+
+(qualified_record_name
+  module: (module
+    name: (atom) @module)
+  name: (atom) @type)
 
 ; type alias
 ; opaque
@@ -190,6 +207,7 @@
   "end"
   "endif"
   "export"
+  "export_record"
   "export_type"
   "file"
   "fun"
@@ -197,10 +215,12 @@
   "ifdef"
   "ifndef"
   "import"
+  "import_record"
   "include"
   "include_lib"
   "maybe"
   "module"
+  "nominal"
   "of"
   "opaque"
   "optional_callbacks"
@@ -208,11 +228,13 @@
   "receive"
   "record"
   "spec"
+  "ssr"
   "try"
   "type"
   "undef"
   "unit"
   "when"
+  "where"
   "xor"
 ] @keyword
 
@@ -244,12 +266,18 @@
   "!"
   "->"
   "<-"
+  "<:-"
+  "<:="
   "#"
+  "#_"
   "::"
+  ":>"
   "|"
   ":"
   "="
+  "==>>"
   "||"
+  "&&"
   "+"
   "-"
   "bnot"
