@@ -134,7 +134,7 @@ impl ErlangLanguagePlatform {
             "{}-v{}-otp-{}",
             Self::LANGUAGE_SERVER_ID,
             release.version,
-            &otp_version,
+            otp_version,
         );
         let binary_path = format!("{}/{}", version_dir, Self::LANGUAGE_SERVER_ID);
 
