@@ -1,0 +1,74 @@
+[
+  {
+    "label": "Rebar3: Compile",
+    "command": "rebar3",
+    "args": ["compile"]
+  },
+  {
+    "label": "Rebar3: Shell",
+    "command": "rebar3",
+    "args": ["shell"],
+    "use_new_terminal": true
+  },
+  {
+    "label": "EUnit: Run all tests",
+    "command": "rebar3",
+    "args": ["eunit"]
+  },
+  {
+    "label": "EUnit: Run $ZED_CUSTOM_erlang_module_name",
+    "command": "rebar3",
+    "args": [
+      "eunit",
+      "--module=$ZED_CUSTOM_erlang_module_name"
+    ],
+    "tags": ["erlang-eunit-module"]
+  },
+  {
+    "label": "EUnit: Run $ZED_CUSTOM_erlang_module_name:$ZED_CUSTOM_erlang_test_name",
+    "command": "rebar3",
+    "args": [
+      "eunit",
+      "--test=$ZED_CUSTOM_erlang_module_name:$ZED_CUSTOM_erlang_test_name"
+    ],
+    "tags": ["erlang-eunit-test"]
+  },
+  {
+    "label": "EUnit: Run generator $ZED_CUSTOM_erlang_module_name:$ZED_CUSTOM_erlang_test_name",
+    "command": "rebar3",
+    "args": [
+      "eunit",
+      "--generator=$ZED_CUSTOM_erlang_module_name:$ZED_CUSTOM_erlang_test_name"
+    ],
+    "tags": ["erlang-eunit-generator"]
+  },
+  {
+    "label": "Common Test: Run all suites",
+    "command": "rebar3",
+    "args": ["ct"]
+  },
+  {
+    "label": "Common Test: Run $ZED_CUSTOM_erlang_module_name",
+    "command": "rebar3",
+    "args": [
+      "ct",
+      "--suite=$ZED_RELATIVE_FILE"
+    ],
+    "tags": ["erlang-common-test-suite"]
+  },
+  {
+    "label": "Common Test: Run $ZED_CUSTOM_erlang_module_name:$ZED_CUSTOM_erlang_test_name",
+    "command": "rebar3",
+    "args": [
+      "ct",
+      "--suite=$ZED_RELATIVE_FILE",
+      "--case=$ZED_CUSTOM_erlang_test_name"
+    ],
+    "tags": ["erlang-common-test-case"]
+  },
+  {
+    "label": "Rebar3: Run EUnit and Common Test",
+    "command": "rebar3",
+    "args": ["do", "eunit,", "ct"]
+  }
+]
