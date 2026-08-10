@@ -10,6 +10,10 @@
   "type" @context
   name: (_) @name) @item
 
+(nominal
+  "nominal" @context
+  name: (_) @name) @item
+
 (opaque
   "opaque" @context
   name: (_) @name) @item

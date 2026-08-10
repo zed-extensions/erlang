@@ -6,4 +6,7 @@
 (type_alias
   ty: (_) @class.inside) @class.around
 
+(nominal
+  ty: (_) @class.inside) @class.around
+
 (comment)+ @comment.around
