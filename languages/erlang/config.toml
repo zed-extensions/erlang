@@ -1,6 +1,6 @@
 name = "Erlang"
 grammar = "erlang"
-path_suffixes = ["erl", "hrl", "app.src", "escript", "xrl", "yrl", "Emakefile", "rebar.config"]
+path_suffixes = ["erl", "erlang", "hrl", "app.src", "escript", "xrl", "yrl", "Emakefile", "rebar.config"]
 line_comments = ["% ", "%% ", "%%% "]
 autoclose_before = ";:.,=}])>"
 brackets = [
