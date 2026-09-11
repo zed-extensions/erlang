@@ -15,7 +15,7 @@ pub struct ErlangLanguagePlatform {
 
 impl ErlangLanguagePlatform {
     pub const LANGUAGE_SERVER_ID: &'static str = "elp";
-    const DEFAULT_ELP_OTP_VERSION: &'static str = "28";
+    const DEFAULT_ELP_OTP_VERSION: &'static str = "28.5";
 
     pub fn new() -> Self {
         Self {
