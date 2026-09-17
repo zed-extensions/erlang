@@ -2,6 +2,7 @@ name = "Erlang"
 grammar = "erlang"
 path_suffixes = ["erl", "erlang", "hrl", "app.src", "escript", "xrl", "yrl", "Emakefile", "rebar.config"]
 line_comments = ["% ", "%% ", "%%% "]
+debuggers = ["erlang-edb"]
 autoclose_before = ";:.,=}])>"
 brackets = [
     { start = "{", end = "}", close = true, newline = true },

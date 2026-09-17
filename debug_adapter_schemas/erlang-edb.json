@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Erlang EDB Debug Adapter Configuration",
+  "type": "object",
+  "required": ["request", "config"],
+  "properties": {
+    "request": {
+      "type": "string",
+      "description": "Type of debug session",
+      "enum": ["launch", "attach"],
+      "default": "launch"
+    },
+    "runInTerminal": {
+      "type": "object",
+      "description": "Command used to launch the Erlang node",
+      "required": ["cwd", "args"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["integrated", "external"],
+          "default": "integrated"
+        },
+        "title": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string",
+          "default": "$ZED_WORKTREE_ROOT"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        },
+        "argsCanBeInterpretedByShell": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object",
+      "description": "EDB session configuration",
+      "properties": {
+        "nameDomain": {
+          "type": "string",
+          "enum": ["shortnames", "longnames"],
+          "default": "shortnames"
+        },
+        "nodeInitCodeInEnvVar": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string",
+          "description": "Name of an Erlang node started with +D"
+        },
+        "cookie": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string",
+          "default": "$ZED_WORKTREE_ROOT"
+        },
+        "stripSourcePrefix": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "number",
+          "default": 60
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
