@@ -6,6 +6,16 @@ schema_version = 1
 authors = ["Dairon M <dairon.medina@gmail.com>", "Fabian Bergström <fabian@fmbb.se>"]
 repository = "https://github.com/zed-extensions/erlang"
 
+[[capabilities]]
+kind = "process:exec"
+command = "erl"
+args = ["-noshell", "-eval", "io:format(\"~s\", [erlang:system_info(otp_release)]), halt()."]
+
+[[capabilities]]
+kind = "process:exec"
+command = "env"
+args = ["-C", "*", "rebar3", "escriptize"]
+
 [language_servers.erlang-ls]
 name = "Erlang Language Server"
 language = "Erlang"
@@ -13,6 +23,11 @@ language = "Erlang"
 [language_servers.elp]
 name = "Erlang Language Platform"
 language = "Erlang"
+
+[debug_adapters.erlang-edb]
+schema_path = "debug_adapter_schemas/erlang-edb.json"
+
+[debug_locators.erlang]
 
 [grammars.erlang]
 repository = "https://github.com/WhatsApp/tree-sitter-erlang"
